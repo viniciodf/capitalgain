@@ -21,20 +21,19 @@ public class CapitalGainServiceImpl implements CapitalGainService {
     private final CapitalGainFactory capitalGainFactory;
 
     @Override
-    public List<Tax> calculateTax(List<CapitalGain> capitalGain) {
-        return processTaxes(capitalGain);
+    public List<Tax> calculateTax(List<CapitalGain> capitalGains) {
+        Context context = loadContext(capitalGains);
+        return processTaxes(capitalGains, context);
     }
 
-    private List<Tax> processTaxes(List<CapitalGain> capitalGains) {
-        List<Tax> taxes = new LinkedList<>();
-        Context context = loadContext(capitalGains);
-        for (CapitalGain capitalGain : capitalGains) {
-            CapitalGain capitalGainProcessed = executeCapitalGain(context, capitalGain);
-            var tax = Tax.builder().tax(capitalGain.getTax()).build();
-            taxes.add(tax);
-            context.setLastCapitalGain(capitalGainProcessed);
-        }
-        return taxes;
+    private List<Tax> processTaxes(List<CapitalGain> capitalGains, Context context) {
+        return capitalGains.stream().map(capitalGain -> processTax(context, capitalGain)).collect(Collectors.toCollection(LinkedList::new));
+    }
+
+    private Tax processTax(Context context, CapitalGain capitalGain) {
+        CapitalGain capitalGainProcessed = executeCapitalGain(context, capitalGain);
+        context.setLastCapitalGain(capitalGainProcessed);
+        return Tax.builder().tax(capitalGain.getTax()).build();
     }
 
     private List<CapitalGain> getOnlyBuyOperations(List<CapitalGain> capitalGains) {
@@ -47,14 +46,14 @@ public class CapitalGainServiceImpl implements CapitalGainService {
     }
 
     private Context loadContext(List<CapitalGain> capitalGainsBuy) {
-        var onlyBuyOperations = getOnlyBuyOperations(capitalGainsBuy);
-        var totalQuantity = getTotalQuantity(onlyBuyOperations);
-        var averageValue = getAverageValue(onlyBuyOperations, totalQuantity);
+        var averageValue = getAverageValue(capitalGainsBuy);
         return Context.builder().averageValue(averageValue).build();
     }
 
-    private Integer getAverageValue(List<CapitalGain> capitalGainsBuy, Integer totalQuantity) {
-        return capitalGainsBuy.stream().reduce(0, (partialSum, b) -> partialSum + (b.getQuantity() * b.getUnitcost()), Integer::sum) / totalQuantity;
+    private Integer getAverageValue(List<CapitalGain> capitalGainsBuy) {
+        var onlyBuyOperations = getOnlyBuyOperations(capitalGainsBuy);
+        var totalQuantity = getTotalQuantity(onlyBuyOperations);
+        return onlyBuyOperations.stream().reduce(0, (partialSum, b) -> partialSum + (b.getQuantity() * b.getUnitcost()), Integer::sum) / totalQuantity;
     }
 
     private Integer getTotalQuantity(List<CapitalGain> capitalGainsBuy) {

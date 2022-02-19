@@ -1,6 +1,5 @@
 package com.capitalgain;
 
-import com.capitalgain.model.CapitalGain;
 import com.capitalgain.model.Context;
 import lombok.experimental.UtilityClass;
 
