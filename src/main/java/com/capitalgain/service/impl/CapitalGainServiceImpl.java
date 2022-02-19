@@ -49,7 +49,7 @@ public class CapitalGainServiceImpl implements CapitalGainService {
     private Context loadContext(List<CapitalGain> capitalGainsBuy) {
         var onlyBuyOperations = getOnlyBuyOperations(capitalGainsBuy);
         var totalQuantity = getTotalQuantity(onlyBuyOperations);
-        var averageValue = getAverageValue(capitalGainsBuy, totalQuantity);
+        var averageValue = getAverageValue(onlyBuyOperations, totalQuantity);
         return Context.builder().averageValue(averageValue).build();
     }
 
